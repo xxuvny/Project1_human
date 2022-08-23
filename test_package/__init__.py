@@ -3,14 +3,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from sklearn.linear_model import Ridge, Lasso, ElasticNet
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, GridSearchCV
 
 # Ridge, Lasso, ElasticNet의 MSE, RMSE 스코어 계산하는 함수
-
 def score_checker(type, data, target, alpha):
     if type == 'ridge':
         type = Ridge(alpha)
-        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error")
+        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error", cv=5)
         rmse_score = np.sqrt(-1 * mse_score)
         avg_rmse = np.mean(rmse_score)
 
@@ -21,7 +20,7 @@ def score_checker(type, data, target, alpha):
 
     elif type == 'lasso':
         type = Lasso(alpha)
-        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error")
+        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error", cv=5)
         rmse_score = np.sqrt(-1 * mse_score)
         avg_rmse = np.mean(rmse_score)
 
@@ -32,7 +31,7 @@ def score_checker(type, data, target, alpha):
 
     elif type == 'elastic':
         type = ElasticNet(alpha)
-        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error")
+        mse_score = cross_val_score(type, data, target, scoring="neg_mean_squared_error", cv=5)
         rmse_score = np.sqrt(-1 * mse_score)
         avg_rmse = np.mean(rmse_score)
 
@@ -42,4 +41,35 @@ def score_checker(type, data, target, alpha):
         print(f'Elastic AVG RMSE : {avg_rmse:.3f}')
 
     else:
-        print(f'Check the values')
+        print(f'Check the type values')
+
+# 알파 찾기 위한 gridSearchCV 수행
+def find_best_alpha(type, data, target):
+    a = 0.01 # 최초 알파값
+    alpha_list = [] # 알파 후보 담을 리스트
+
+    if type == 'ridge':
+        model_test = Ridge()
+    elif type == 'lasso':
+        model_test = Lasso()
+    elif type == 'elastic':
+        model_test = ElasticNet()
+    else:
+        print(f'Check the type values')
+
+    for i in range(0,100):
+        a = round(a, 2)
+        alpha_list.append(a)
+        a += 0.01
+
+    # grid search 수행
+    grid_search = GridSearchCV(model_test, param_grid={'alpha' : alpha_list})
+    grid_search.fit(data, target)
+
+    # Best alpha
+    # print(f'Best alpha : {grid_search.best_params_}')
+
+    # Best alpha & MSE & RMSE
+    MSE = np.abs(grid_search.best_score_)
+    RMSE = np.sqrt(np.abs(MSE))
+    print(f'Type : {type} | {grid_search.best_params_} | MSE : {MSE} | RMSE: {RMSE}')
