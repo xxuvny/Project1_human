@@ -1,7 +1,9 @@
+import pandas as pd
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.linear_model import Ridge, Lasso, ElasticNet
 from sklearn.model_selection import cross_val_score, GridSearchCV
 
@@ -73,3 +75,15 @@ def find_best_alpha(type, data, target):
     MSE = np.abs(grid_search.best_score_)
     RMSE = np.sqrt(np.abs(MSE))
     print(f'Type : {type} | {grid_search.best_params_} | MSE : {MSE} | RMSE: {RMSE}')
+
+
+# VIF 계산을 위한 함수
+def find_vif(data):
+    vif_df = pd.DataFrame()
+    vif_df["VIF Factor"] = [variance_inflation_factor(data.values, i) for i in range(data.shape[1])]
+    vif_df["features"] = data.columns
+
+    # VIF 높은 순서대로 재정렬하고 출력
+    vif_df = vif_df.sort_values(by="VIF Factor", ascending=False)
+    vif_df = vif_df.reset_index().drop(columns='index')
+    print(vif_df)
